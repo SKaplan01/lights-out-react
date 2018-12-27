@@ -8,7 +8,7 @@ import './Board.css';
  *
  * - nrows: number of rows of board
  * - ncols: number of cols of board
- * - chanceLightStartsOn: float, chance any cell is lit at start of game
+ * - Difficulty: int, number of permutations to mess up the board at start of game
  *
  * State:
  *
@@ -22,7 +22,7 @@ import './Board.css';
  *
  *    This would be: [[f, f, f], [t, t, f], [f, f, f]]
  *
- *  This should render an HTML table of individual <Cell /> components.
+ *  This should render a grid of individual <Cell /> components.
  *
  *  This doesn't handle any clicks --- clicks are on individual cells
  *
@@ -37,16 +37,13 @@ class Board extends Component {
 
   constructor(props) {
     super(props);
-    // TODO: set initial state
     this.state = {
       board: this.createBoard(),
-      hasWon: false
+      hasWon: true
     };
   }
 
-  /** create a board nrows high/ncols wide, each cell randomly lit (true) or unlit(false) */
-
-  //returns an array-of-arrays of true/false values
+  //returns an array-of-arrays of true/false values representing the state of the board (lit and unlit cells)
   createBoard() {
     let board = [];
     let { ncols, nrows, chanceLightStartsOn } = this.props;
@@ -68,14 +65,13 @@ class Board extends Component {
 
   /** handle changing a cell: update board & determine if winner */
 
-  flipCellsAround(evt) {
+  flipCellsAround(coord) {
     let { ncols, nrows } = this.props;
     let board = this.state.board;
-    let [y, x] = evt.target.id.split('-').map(Number);
+    let [y, x] = coord.split('-').map(Number);
 
     function flipCell(y, x) {
       // if this coord is actually on board, flip it
-
       if (x >= 0 && x < ncols && y >= 0 && y < nrows) {
         board[y][x] = !board[y][x];
       }
@@ -101,6 +97,12 @@ class Board extends Component {
     this.setState({ board, hasWon });
   }
 
+  reStartGame() {
+    let board = this.createBoard();
+    let hasWon = false;
+    this.setState({ board, hasWon });
+  }
+
   /** Render game board or winning message. */
 
   render() {
@@ -108,7 +110,7 @@ class Board extends Component {
     let winningMessage = (
       <div>
         <h2>You win!</h2>
-        <button>Play again</button>
+        <button onClick={() => this.reStartGame()}>Play again</button>
       </div>
     );
 
@@ -120,11 +122,10 @@ class Board extends Component {
       for (let j = 0; j < board[i].length; j++) {
         let coord = `${i}-${j}`;
         row.push(
-          <div
+          <Cell
+            isLit={board[i][j]}
             key={coord}
-            id={coord}
-            className={board[i][j] ? 'cell on' : 'cell off'}
-            onClick={evt => this.flipCellsAround(evt)}
+            flipCellsAroundMe={this.flipCellsAround.bind(this, coord)}
           />
         );
       }
