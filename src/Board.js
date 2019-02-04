@@ -32,39 +32,65 @@ class Board extends Component {
   static defaultProps = {
     nrows: 5,
     ncols: 5,
-    chanceLightStartsOn: 0.1
+    chanceLightStartsOn: 0.1,
+    difficulty: 5
   };
 
   constructor(props) {
     super(props);
     this.state = {
-      board: this.createBoard(),
-      hasWon: true
+      hasWon: false,
+      board: this.createBoard()
     };
+  }
+
+  //TODO: add sliding scale to change difficulty of game(will change prop for "difficulty")
+  //needs to be passed from parent
+
+  componentDidMount() {
+    this.setUpPuzzle();
   }
 
   //returns an array-of-arrays of true/false values representing the state of the board (lit and unlit cells)
   createBoard() {
     let board = [];
-    let { ncols, nrows, chanceLightStartsOn } = this.props;
+    let { ncols, nrows } = this.props;
+
     for (let j = 0; j < nrows; j++) {
       //make each row
       let row = [];
       for (let i = 0; i < ncols; i++) {
-        let on = Math.random();
-        if (on < chanceLightStartsOn) {
-          row.push(true);
-        } else {
-          row.push(false);
-        }
+        row.push(false);
+        // let on = Math.random();
+        // if (on < chanceLightStartsOn) {
+        //   row.push(true);
+        // } else {
+        //   row.push(false);
+        // }
       }
       board.push(row);
     }
+
     return board;
   }
 
-  /** handle changing a cell: update board & determine if winner */
+  //determines which lights are "on" to start the game (ensures a solveable puzzle)
+  setUpPuzzle() {
+    let { ncols, nrows } = this.props;
+    //randomly generate list of cells to "click" to set up the puzzle
+    let cellsToClick = [];
+    for (let j = 0; j < this.props.difficulty; j++) {
+      let x = Math.floor(Math.random() * ncols);
+      let y = Math.floor(Math.random() * nrows);
+      let coord = `${y}-${x}`;
+      cellsToClick.push(coord);
+    }
 
+    // "click" cells by calling flipCellsAround on random coord
+    cellsToClick.forEach(coord => this.flipCellsAround(coord));
+  }
+
+  /** handle changing a cell: update board & determine if winner */
   flipCellsAround(coord) {
     let { ncols, nrows } = this.props;
     let board = this.state.board;
@@ -100,7 +126,7 @@ class Board extends Component {
   reStartGame() {
     let board = this.createBoard();
     let hasWon = false;
-    this.setState({ board, hasWon });
+    this.setState({ board, hasWon }, () => this.setUpPuzzle());
   }
 
   /** Render game board or winning message. */
